@@ -1,35 +1,32 @@
-# Sprawozdanie z laboratorium nr 4 - PAwChO
+# Sprawozdanie - PAwChO laboratorium 4
 
-**Temat:** Analiza struktury obrazów Docker oraz wykorzystanie plików Dockerfile  
+**Temat:** Analiza struktury obrazów Docker i wykorzystanie Dockerfile  
 **Obraz:** `web100`  
 **Student:** Wiktor Fura  
 **E-mail:** s101560@pollub.edu.pl  
 **Grupa dziekańska:** IO6  
-**Repozytorium GitHub:** https://github.com/BaMoMi/pawcho-lab4-web100  
-**Repozytorium DockerHub:** https://hub.docker.com/r/wiktorfff/web100  
+**GitHub:** https://github.com/BaMoMi/pawcho-lab4-web100  
+**DockerHub:** https://hub.docker.com/r/wiktorfff/web100  
 
-## 1. Cel zadania
+## 1. Cel ćwiczenia
 
-Celem zadania było przygotowanie pliku `Dockerfile`, a następnie zbudowanie na jego podstawie obrazu Docker o nazwie `web100`. Obraz miał bazować na najnowszym Ubuntu, zawierać zaktualizowany system, zainstalowany serwer HTTP Apache oraz skopiowaną stronę WWW z danymi studenta.
+Celem ćwiczenia było przygotowanie pliku `Dockerfile` i zbudowanie obrazu Docker o nazwie `web100`. Obraz miał korzystać z najnowszego Ubuntu, mieć zaktualizowany system, zainstalowany serwer HTTP Apache oraz własną stronę WWW z danymi studenta.
 
-## 2. Etap 1 - przygotowanie projektu i Dockerfile
+## 2. Pliki projektu
 
-Utworzono katalog projektu oraz przygotowano pliki wymagane do zbudowania obrazu. Po wygenerowaniu początkowej struktury projektu dostosowano plik `Dockerfile` do wymagań ćwiczenia.
-
-Struktura katalogu projektu:
+W projekcie znajdują się następujące pliki:
 
 ```text
-lab4_web100/
-├── Dockerfile
-├── index.html
-├── .dockerignore
-├── README.md
-└── sprawozdanie_lab4.md
+Dockerfile
+index.html
+.dockerignore
+README.md
+sprawozdanie_lab4.md
 ```
 
-Zawartość pliku `index.html` obejmuje imię i nazwisko studenta, adres e-mail oraz grupę dziekańską. Strona jest kopiowana do katalogu `/var/www/html/index.html`, czyli standardowej lokalizacji strony startowej serwera Apache.
+Plik `index.html` został skopiowany do katalogu `/var/www/html/index.html`, czyli domyślnego katalogu strony startowej Apache.
 
-## 3. Ostateczna zawartość pliku Dockerfile
+## 3. Dockerfile
 
 ```dockerfile
 FROM ubuntu:latest
@@ -51,87 +48,69 @@ EXPOSE 80
 CMD ["apachectl", "-D", "FOREGROUND"]
 ```
 
-## 4. Etap 2 - modyfikacje i uzasadnienie
+## 4. Uzasadnienie zmian w Dockerfile
 
-W pliku `Dockerfile` wprowadzono zmiany wynikające z dobrych praktyk tworzenia obrazów Docker:
+Do budowy wykorzystałem `ubuntu:latest`, ponieważ takie było wymaganie w zadaniu. Dane autora zostały zapisane w instrukcji `LABEL`. Aktualizacja systemu, instalacja Apache i czyszczenie cache zostały wykonane w jednej instrukcji `RUN`, żeby nie tworzyć niepotrzebnych dodatkowych warstw.
 
-1. Zastosowano `ubuntu:latest`, ponieważ zadanie wymagało użycia najnowszej wersji obrazu bazowego Ubuntu.
-2. Dane autora zapisano w etykiecie `LABEL org.opencontainers.image.authors`, co pozwala przechowywać metadane obrazu.
-3. Aktualizację systemu i instalację Apache połączono w jednej instrukcji `RUN`. Dzięki temu zmniejszono liczbę dodatkowych warstw obrazu.
-4. Użyto opcji `--no-install-recommends`, aby nie instalować zbędnych pakietów rekomendowanych.
-5. Po instalacji wykonano `apt-get clean` oraz usunięto `/var/lib/apt/lists/*`, aby ograniczyć rozmiar końcowego obrazu.
-6. Do obrazu kopiowany jest wyłącznie plik `index.html`, co upraszcza kontekst budowania.
-7. Zastosowano `EXPOSE 80`, aby informacyjnie wskazać port używany przez Apache.
-8. Polecenie startowe zapisano w formie exec: `CMD ["apachectl", "-D", "FOREGROUND"]`, aby proces Apache działał jako główny proces kontenera.
+Użyłem też opcji `--no-install-recommends`, aby nie instalować pakietów, które nie są potrzebne do działania prostego serwera WWW. Po instalacji wykonałem `apt-get clean` i usunąłem katalog `/var/lib/apt/lists/*`, co zmniejsza rozmiar obrazu. Instrukcja `EXPOSE 80` informuje, że kontener korzysta z portu 80. Apache jest uruchamiany poleceniem `CMD ["apachectl", "-D", "FOREGROUND"]`, dzięki czemu działa jako główny proces kontenera.
 
 ## 5. Budowanie obrazu
 
-Obraz zbudowano poleceniem:
+Obraz został zbudowany poleceniem:
 
 ```bash
-docker image build --file Dockerfile --tag web100:latest .
+docker build -t web100 .
 ```
 
-Po zakończeniu budowania można sprawdzić obecność obrazu:
+Budowanie zakończyło się poprawnie, a obraz został zapisany lokalnie jako `web100:latest`.
+
+## 6. Uruchomienie i sprawdzenie działania
+
+Kontener testowy został uruchomiony poleceniem:
 
 ```bash
-docker images | grep web100
+docker run -d --name web100-test -p 8080:80 web100
 ```
 
-## 6. Uruchomienie i test działania
-
-Kontener testowy można uruchomić poleceniem:
-
-```bash
-docker run --name web100-test -d -p 8080:80 web100:latest
-```
-
-Następnie należy wejść w przeglądarce na adres:
+Następnie sprawdziłem stronę w przeglądarce pod adresem:
 
 ```text
 http://localhost:8080
 ```
 
-albo sprawdzić odpowiedź z terminala:
+Strona wyświetliła dane studenta, e-mail oraz grupę dziekańską.
+
+## 7. Liczba warstw obrazu
+
+Liczbę warstw sprawdziłem poleceniem:
 
 ```bash
-curl http://localhost:8080
+docker inspect web100:latest --format "{{len .RootFS.Layers}}"
 ```
 
-Po zakończeniu testu kontener można zatrzymać i usunąć:
+Wynik polecenia:
 
-```bash
-docker stop web100-test
-docker rm web100-test
+```text
+4
 ```
 
-## 7. Sprawdzenie liczby warstw
-
-Liczbę warstw obrazu można sprawdzić poleceniem:
-
-```bash
-docker inspect web100:latest --format '{{len .RootFS.Layers}}'
-```
-
-Dodatkowo historię warstw można wyświetlić poleceniem:
-
-```bash
-docker image history web100:latest
-```
-
-W lokalnym środowisku liczba warstw została sprawdzona poleceniem `docker inspect` i wyniosła **4**. Wynik ten potwierdza, że obraz został zbudowany poprawnie, a jego struktura warstw jest możliwa do zweryfikowania narzędziami Docker CLI.
+Oznacza to, że przygotowany obraz posiada 4 warstwy systemu plików.
 
 ## 8. Wysłanie obrazu do DockerHub
 
-Po zbudowaniu obrazu należy nadać mu tag zgodny z repozytorium DockerHub i wysłać obraz:
+Obraz został oznaczony tagiem zgodnym z nazwą repozytorium DockerHub:
 
 ```bash
-docker login
 docker tag web100:latest wiktorfff/web100:latest
+```
+
+Następnie obraz został wysłany poleceniem:
+
+```bash
 docker push wiktorfff/web100:latest
 ```
 
-Adres repozytorium DockerHub:
+Repozytorium DockerHub:
 
 ```text
 https://hub.docker.com/r/wiktorfff/web100
@@ -139,4 +118,4 @@ https://hub.docker.com/r/wiktorfff/web100
 
 ## 9. Wnioski
 
-W ramach ćwiczenia przygotowano obraz Docker z serwerem Apache. Wykorzystano obraz bazowy `ubuntu:latest`, zaktualizowano system, zainstalowano Apache oraz skopiowano stronę WWW zawierającą dane studenta. Plik `Dockerfile` został zoptymalizowany przez ograniczenie liczby instrukcji `RUN`, czyszczenie cache pakietów oraz zastosowanie pliku `.dockerignore`.
+W ramach ćwiczenia został przygotowany działający obraz Docker z serwerem Apache. Po uruchomieniu kontenera strona była dostępna lokalnie na porcie 8080. Obraz został sprawdzony pod względem liczby warstw i wysłany do DockerHub.
