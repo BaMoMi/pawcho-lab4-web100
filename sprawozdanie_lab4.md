@@ -6,7 +6,7 @@
 **E-mail:** s101560@pollub.edu.pl  
 **Grupa dziekańska:** IO6  
 **Repozytorium GitHub:** https://github.com/BaMoMi/pawcho-lab4-web100  
-**Repozytorium DockerHub:** https://hub.docker.com/r/bamomi/web100  
+**Repozytorium DockerHub:** https://hub.docker.com/r/wiktorfff/web100  
 
 ## 1. Cel zadania
 
@@ -83,7 +83,7 @@ docker images | grep web100
 Kontener testowy można uruchomić poleceniem:
 
 ```bash
-docker run --name web100_test -d -p 8080:80 web100:latest
+docker run --name web100-test -d -p 8080:80 web100:latest
 ```
 
 Następnie należy wejść w przeglądarce na adres:
@@ -101,8 +101,8 @@ curl http://localhost:8080
 Po zakończeniu testu kontener można zatrzymać i usunąć:
 
 ```bash
-docker stop web100_test
-docker rm web100_test
+docker stop web100-test
+docker rm web100-test
 ```
 
 ## 7. Sprawdzenie liczby warstw
@@ -119,7 +119,7 @@ Dodatkowo historię warstw można wyświetlić poleceniem:
 docker image history web100:latest
 ```
 
-Dla przygotowanego pliku `Dockerfile` obraz powinien posiadać zwykle 3 warstwy wynikające z instrukcji modyfikujących system plików: warstwę obrazu bazowego Ubuntu, warstwę z instrukcji `RUN` oraz warstwę z instrukcji `COPY`. Ostateczną liczbę warstw należy potwierdzić wynikiem komendy `docker inspect` w lokalnym środowisku.
+W lokalnym środowisku liczba warstw została sprawdzona poleceniem `docker inspect` i wyniosła **4**. Wynik ten potwierdza, że obraz został zbudowany poprawnie, a jego struktura warstw jest możliwa do zweryfikowania narzędziami Docker CLI.
 
 ## 8. Wysłanie obrazu do DockerHub
 
@@ -127,14 +127,14 @@ Po zbudowaniu obrazu należy nadać mu tag zgodny z repozytorium DockerHub i wys
 
 ```bash
 docker login
-docker tag web100:latest bamomi/web100:latest
-docker push bamomi/web100:latest
+docker tag web100:latest wiktorfff/web100:latest
+docker push wiktorfff/web100:latest
 ```
 
 Adres repozytorium DockerHub:
 
 ```text
-https://hub.docker.com/r/bamomi/web100
+https://hub.docker.com/r/wiktorfff/web100
 ```
 
 ## 9. Wnioski
